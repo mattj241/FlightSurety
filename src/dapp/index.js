@@ -25,6 +25,16 @@ import './flightsurety.css';
                 display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
             });
         })
+
+        DOM.elid('submit-insurance').addEventListener('click', () => {
+            let flightNumber = DOM.elid('flight-number-insurance').value;
+            let flightAddress = DOM.elid('flight-address-insurance').value;
+            let etherAmount = DOM.elid('flight-amount-insurance').value;
+            // Write transaction
+            contract.fetchFlightStatus(flight, (error, result) => {
+                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+            });
+        })
     
     });
     
