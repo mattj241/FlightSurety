@@ -36,7 +36,7 @@ contract FlightSuretyApp {
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
-        uint256 updatedTimestamp;        
+        uint256 updatedTimestamp;
         address airline;
     }
     mapping(bytes32 => Flight) private flights;
@@ -57,8 +57,8 @@ contract FlightSuretyApp {
     event airlineRegistered(address airline);
     event airlineFeesPaid(address airline);
     event passengerRegistered(address passenger);
-    event flightRegistered(address flight);
-    event passengerBoughtInsurance(address passengerAddress, address flightAddress, uint256 insuranceAmount);
+    event flightRegistered(address airline, string flightName, uint256 timestamp);
+    event passengerBoughtInsurance(address passengerAddress, address flightAddress, string flightName, uint256 insuranceAmount);
  
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -99,16 +99,16 @@ contract FlightSuretyApp {
     modifier requireIsPassenger(address inputAddress)
     {
         bool isPassenger = isAddressPassenger(inputAddress);
-        require(isPassenger == true, "Address is not a passenger");
+        require(isPassenger == true, "Caller is not a passenger");
         _;
     }
 
-    modifier requireIsFlight(address inputAddress)
-    {
-        bool isFlight = isAddressFlight(inputAddress);
-        require(isFlight == true, "Address is not a flight");
-        _;
-    }
+    // modifier requireIsFlight(address inputAddress)
+    // {
+    //     bool isFlight = isAddressFlight(inputAddress);
+    //     require(isFlight == true, "Address is not a flight");
+    //     _;
+    // }
 
     modifier requireIsFundedAirline(address inputAddress)
     {
@@ -131,13 +131,6 @@ contract FlightSuretyApp {
         _;
     }
 
-    modifier requireIsNotFlight(address inputAddress)
-    {
-        bool isFlight = isAddressFlight(inputAddress);
-        require(isFlight == false, "Address already a flight");
-        _;
-    }
-
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -146,16 +139,13 @@ contract FlightSuretyApp {
     * @dev Contract constructor
     *
     */
-    constructor(address payable flightSuretyDataContract) 
+    constructor(address payable flightSuretyDataContract)
     {
         dataContract = FlightSuretyData(flightSuretyDataContract);
         contractOwner = msg.sender;
-        address flight1 = 0x512199aAEbe9293652837B0CAE601B520Bd30614;
-        address flight2 = 0x9E3B7a012Fa8Cb56dEc804510201c53e9986248A;
-        address flight3 = 0x62D8022c2356758B55385f4Bd785E133D2C0fe10;
-        dataContract.registerFlight(flight1);
-        dataContract.registerFlight(flight2);
-        dataContract.registerFlight(flight3);
+
+        //contractOwner is the first airline
+        registerInitialAirline(contractOwner);
     }
 
     /********************************************************************************************/
@@ -210,15 +200,6 @@ contract FlightSuretyApp {
         return dataContract.isAddressPassenger(inputAddress);
     }
 
-    function isAddressFlight(address inputAddress) 
-        public
-        view
-        returns(bool)
-    {
-        return dataContract.isAddressFlight(inputAddress);
-    }
-    
-
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -232,13 +213,12 @@ contract FlightSuretyApp {
         requireIsOperational
         requireIsNotAirline(inputAirlineAddress)
         requireIsNotPassenger(inputAirlineAddress)
-        requireIsNotFlight(inputAirlineAddress)
     {
         uint airlinesCount = dataContract.getNumAirlines();
 
         if (airlinesCount < NUM_CONSENSUS_MIN)
         {
-            require(isAddressAirline(msg.sender), "Must be an airline to submit another airline when total airlines are below the minimum for consensus");
+            require(isAddressFundedAirline(msg.sender), "Must be an airline to submit another airline when total airlines are below the minimum for consensus");
             dataContract.registerAirline(inputAirlineAddress);
             emit airlineRegistered(inputAirlineAddress);
         }
@@ -265,6 +245,15 @@ contract FlightSuretyApp {
                 isAirlineQueued[inputAirlineAddress] = true;
             }
         }
+    }
+
+    function registerInitialAirline(address inputAirlineAddress)
+        public
+        requireIsOperational
+        requireContractOwner
+    {
+        dataContract.registerFirstAirline(inputAirlineAddress);
+        emit airlineRegistered(inputAirlineAddress);
     }
 
     function payAirlineFee()
@@ -296,50 +285,65 @@ contract FlightSuretyApp {
         requireIsOperational
         requireIsNotAirline(inputPassengerAddress)
         requireIsNotPassenger(inputPassengerAddress)
-        requireIsNotFlight(inputPassengerAddress)
     {
-        bool isAirline = isAddressAirline(inputPassengerAddress);
-        require(isAirline == false, "An address can not be doubled up as airline and passenger");
+        bool isPassenger = isAddressPassenger(inputPassengerAddress);
+        require(isPassenger == false, "An address can not be doubled up as airline and passenger");
         dataContract.registerPassenger(inputPassengerAddress);
         emit passengerRegistered(inputPassengerAddress);
     }
 
-    function registerFlight(address inputFlightAddress)
+    function registerPassengerContractOwner(address inputPassengerAddress)
         public
-        requireIsOperational
-        requireIsNotAirline(inputFlightAddress)
-        requireIsNotPassenger(inputFlightAddress)
-        requireIsNotFlight(inputFlightAddress)
+        // requireIsOperational
+        // requireContractOwner
     {
-        dataContract.registerFlight(inputFlightAddress);
-        emit flightRegistered(inputFlightAddress);
+        require(dataContract.isAddressPassenger(inputPassengerAddress) == false, "address is already a passenger!");
+        dataContract.registerPassenger(inputPassengerAddress);
+        //emit passengerRegistered(inputPassengerAddress);
     }
 
-    function passengerBuysInsurance(address inputFlightAddress)
+    function registerFlight(string memory flightName, uint256 timestamp)
+        public
+        requireIsOperational
+        requireIsAirline(msg.sender)
+        returns(bytes32)
+    {
+        bytes32 flightKey = dataContract.registerFlight(msg.sender, flightName, timestamp);
+        emit flightRegistered(msg.sender, flightName, timestamp);
+        return flightKey;
+    }
+
+    function getFlightInfo(bytes32 flightKey)
+        public
+        view
+        requireIsOperational
+        returns (address, string memory, uint256)
+    {
+        (address airline, string memory flightName, uint256 timeStamp) = dataContract.getFlightInfo(flightKey);
+        return (airline, flightName, timeStamp);
+    }
+
+    function passengerBuysInsurance(address airlineAddress, string memory flightName, uint256 timeStamp)
         public
         payable
         requireIsOperational
         requireIsPassenger(msg.sender)
-        requireIsFlight(inputFlightAddress)
     {
         require(msg.value <= INSURANCE_LIMIT, "Insurance Contributions may not exceed 1 ether");
         address payable payableContract = payable(address(dataContract));
         payableContract.transfer(msg.value);
 
-        dataContract.buy(msg.sender, inputFlightAddress, msg.value);
-        emit passengerBoughtInsurance(msg.sender, inputFlightAddress, msg.value);
+        dataContract.buy(msg.sender, flightName, msg.value, airlineAddress, timeStamp);
+        emit passengerBoughtInsurance(msg.sender, airlineAddress, flightName, msg.value);
     }
 
-    function passengerCollectsInsurancePayout(address inputFlightAddress)
+    function claimInsurancePayout()
         public
-        // payable
+        payable
         requireIsOperational
         requireIsPassenger(msg.sender)
-        requireIsFlight(inputFlightAddress)
     {
-        require(dataContract.isInsuranceCollectable(msg.sender, inputFlightAddress) ==  true, "Insurance connect be collected");
-        require(dataContract.getInsurancePayoutAmount(msg.sender, inputFlightAddress) > 0, "No ether to collect");
-        dataContract.creditInsurees(msg.sender, inputFlightAddress);
+        dataContract.claimInsurance(msg.sender);
     }
 
     function fund()
@@ -356,16 +360,17 @@ contract FlightSuretyApp {
     * @dev Called after oracle has updated flight status
     *
     */  
-    function processFlightStatus
-                                (
-                                    address airline,
-                                    string memory flight,
-                                    uint256 timestamp,
-                                    uint8 statusCode
-                                )
-                                internal
-                                pure
+    function processFlightStatus(
+        address airline, string memory flight,
+        uint256 timestamp, uint8 statusCode)
+        internal
     {
+        if (    statusCode == STATUS_CODE_LATE_AIRLINE )
+            // ||  statusCode == STATUS_CODE_LATE_WEATHER
+            // ||  statusCode == STATUS_CODE_LATE_TECHNICAL)
+            {
+                dataContract.creditInsurees(airline, flight, timestamp);
+            }
     }
 
 

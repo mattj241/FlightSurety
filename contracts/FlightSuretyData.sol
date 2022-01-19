@@ -11,10 +11,9 @@ contract FlightSuretyData {
     /********************************************************************************************/
     address private contractOwner;      // Account used to deploy contract
     bool private operational = true;    // Blocks all state changes throughout the contract if false
-    mapping(address => bool) isAppContractAuthorized;
+    mapping(address => bool) isAddressAuthorized;
 
     address[] private airlines;         
-    uint numAirlines; 
     mapping(address => bool) isAirline; // mapping makes the isAirline modifier simple to understand
     mapping(address => bool) isAirlineFeePaid;
 
@@ -22,34 +21,41 @@ contract FlightSuretyData {
     mapping(address => bool) isPassenger;
     mapping(address => uint256) passengerBalance;
 
-    address[] private flights;
-    mapping(address => bool) isFlight;
+    bytes32[] private flightKeys; //airline, flightName, timestamp
+    mapping(bytes32 => Flight) private flights;
 
     struct Insurance
     {
-        // address passenger;
-        // address flight;
+        address passenger;
         uint256 amountInsured;
         uint256 amountPayout;
-        bool    repaymentGranted;
     }
-    mapping(address => mapping(address => Insurance)) insurances;
+    struct Flight {
+        bool isRegistered;
+        uint8 statusCode;
+        address airline;
+        string flightName;
+        uint256 updatedTimestamp;
+    }
+
+    mapping(bytes32 => Insurance[]) insurances;
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
+    event airlineRegistered(address);
+    event insurancePayoutClaimable(address);
 
     /**
     * @dev Constructor
     *      The deploying account becomes contractOwner
     */
     constructor()
+        payable
     {
         contractOwner = msg.sender;
-        airlines.push(msg.sender);
-        isAirline[msg.sender] = true;
-        isAirlineFeePaid[msg.sender] = false;
-        numAirlines = 1;
+        isAddressAuthorized[contractOwner] = true;
+        isAddressAuthorized[address(this)] = true;
     }
 
     /********************************************************************************************/
@@ -81,7 +87,7 @@ contract FlightSuretyData {
 
     modifier requireCallerIsAuthorized()
     {
-        require(isAppContractAuthorized[msg.sender], "Caller is not authorized");
+        require(isAddressAuthorized[msg.sender], "Caller is not authorized");
         _;
     }
 
@@ -121,14 +127,14 @@ contract FlightSuretyData {
         external 
         requireContractOwner
     {
-        isAppContractAuthorized[inputAddress] = true;
+        isAddressAuthorized[inputAddress] = true;
     }
 
     function removeAuthorizedCaller (address inputAddress) 
         external 
         requireContractOwner
     {
-        isAppContractAuthorized[inputAddress] = false;
+        isAddressAuthorized[inputAddress] = false;
     }
 
     /**
@@ -152,13 +158,22 @@ contract FlightSuretyData {
         return isAirline[inputAddress];
     }
 
-    function isAddressAuthorized(address inputAddress)
+    function getAirline(uint index)
+        external
+        view
+        requireIsOperational
+        returns(address)
+    {
+        return airlines[index];
+    }
+
+    function isCallerAuthorized(address inputAddress)
         external
         view
         requireIsOperational
         returns(bool)
     {
-        return isAppContractAuthorized[inputAddress];
+        return isAddressAuthorized[inputAddress];
     }
 
     function isAddressFundedAirline(address inputAddress)
@@ -180,42 +195,33 @@ contract FlightSuretyData {
         return isPassenger[inputAddress];
     }
 
-    function isAddressFlight(address inputAddress)
-        external
-        view
-        requireIsOperational
-        returns(bool)
-    {
-        return isFlight[inputAddress];
-    }
+    // function isInsuranceCollectable(address passenger, string memory flightName)
+    //     external
+    //     view
+    //     requireIsOperational
+    //     returns(bool)
+    // {
+    //     return insurances[passenger][flightName].payoutPermitted;
+    // }
 
-    function isInsuranceCollectable(address passenger, address flight)
-        external
-        view
-        requireIsOperational
-        returns(bool)
-    {
-        return insurances[passenger][flight].repaymentGranted;
-    }
-
-    function getInsurancePayoutAmount(address passenger, address flight)
-        external
-        view
-        requireIsOperational
-        // requireCallerIsAuthorized
-        returns(uint256)
-    {
-        return insurances[passenger][flight].amountPayout;
-    }
+    // function getInsurancePayoutAmount(address passenger, string memory flightName)
+    //     external
+    //     view
+    //     requireIsOperational
+    //     // requireCallerIsAuthorized
+    //     returns(uint256)
+    // {
+    //     return insurances[passenger][flightName].amountPayout;
+    // }
 
     function getNumAirlines()
         external
         view
         requireIsOperational
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         returns(uint)
     {
-        return numAirlines;
+        return airlines.length;
     }
 
     function getContractOwner()
@@ -226,13 +232,22 @@ contract FlightSuretyData {
         return contractOwner;
     }
 
-    function getAuthCaller(address input)
-        external
-        view
-        returns(bool)
+    function getFlightKey(address airline, string memory flight, uint256 timestamp)
+        pure
+        internal
+        returns(bytes32) 
     {
-        return isAppContractAuthorized[input];
+        return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
+
+    function getFlightKeysForUI()
+        public
+        view
+        returns(bytes32[] memory)
+    {
+        return flightKeys;
+    }
+
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
@@ -245,20 +260,32 @@ contract FlightSuretyData {
     */   
     function registerAirline(address airlineAddress) 
         requireIsOperational 
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         external
     {
         airlines.push(airlineAddress);
         isAirline[airlineAddress] = true;
         isAirlineFeePaid[airlineAddress] = false;
-        isAppContractAuthorized[airlineAddress] = true;
-        numAirlines += 1;
+        isAddressAuthorized[airlineAddress] = true;
+    }
+
+    function registerFirstAirline(address initialAirline) 
+        requireIsOperational 
+        external
+    {
+        require(airlines.length <= 0, "This function can only be used once");
+        airlines.push(initialAirline);
+        isAirline[initialAirline] = true;
+        isAirlineFeePaid[initialAirline] = false;
+        isAddressAuthorized[initialAirline] = true;
+
+        // emit airline registration in dataContract only for initial airline
+        // emit airlineRegistered(initialAirline);
     }
 
     function payAirlineFee(address airlineAddress)
         requireIsOperational
         // requireCallerIsAuthorized
-        // requireIsAirline(msg.sender)
         external 
     {
         // require(msg.sender == airlineAddress, "An airline can only pay for their own funding fee");
@@ -272,58 +299,98 @@ contract FlightSuretyData {
     {
         passengers.push(passengerAddress);
         isPassenger[passengerAddress] = true;
+        passengerBalance[passengerAddress] = 0;
     }
 
-    function registerFlight(address flightAddress) 
+    function registerFlight(address airline, string memory flightName, uint256 timestamp) 
         requireIsOperational 
         // requireCallerIsAuthorized
         external
+        returns (bytes32)
     {
-        flights.push(flightAddress);
-        isFlight[flightAddress] = true;
+        bytes32 flightKey = getFlightKey(airline, flightName, timestamp);
+        flightKeys.push(flightKey);
+        flights[flightKey] = Flight(true, 0, airline, flightName, timestamp);
+        return flightKey;
+    }
+
+    function getFlightInfo(bytes32 flightKey)
+        requireIsOperational 
+        // requireCallerIsAuthorized
+        external
+        view
+        returns (address, string memory, uint256)
+    {
+        address airline = flights[flightKey].airline;
+        string memory name = flights[flightKey].flightName;
+        uint256 timeStamp = flights[flightKey].updatedTimestamp;
+        return (airline, name, timeStamp);
     }
 
    /**
     * @dev Buy insurance for a flight
     *
     */   
-    function buy(address passenger, address flight, uint256 value)                             
+    function buy(address passenger, string memory flightName, uint256 value, address airline, uint256 timeStamp)                             
         requireIsOperational 
         // requireCallerIsAuthorized
         // payable
         external
     {
-        insurances[passenger][flight].amountInsured = value;
+        bytes32 flightKey = getFlightKey(airline, flightName, timeStamp);
+        Insurance memory newInsurance;
+        newInsurance.passenger = passenger;
+        newInsurance.amountInsured = value;
 
         uint256 insuranceBonus = value / 2;
-        insurances[passenger][flight].amountPayout = value + insuranceBonus;
-        insurances[passenger][flight].repaymentGranted = false;
+        newInsurance.amountPayout = value + insuranceBonus;
+        insurances[flightKey].push(newInsurance);
     }
 
-    function setRepaymentStatus(address passenger, address flight, bool status)
-        requireIsOperational 
-        // requireCallerIsAuthorized
-        external
-    {
-        insurances[passenger][flight].repaymentGranted = status;
-    }
+    // function setRepaymentStatus(address airline, string memory flight, uint256 timestamp, bool status)
+    //     requireIsOperational 
+    //     // requireCallerIsAuthorized
+    //     external
+    // {
+    //     bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+    //     for (uint16 i = 0; i < insurances[flightKey].length; i++)
+    //     {
+    //         insurances[flightKey][i].payoutPermitted = status;
+    //     }
+    // }
 
     /**
      *  @dev Credits payouts to insurees
     */
-    function creditInsurees(address passenger, address flight)
+    function creditInsurees(address airline, string memory flight, uint256 timestamp)
+        requireIsOperational 
+        // requireCallerIsAuthorized
+        external
+    {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        for (uint8 i = 0; i < insurances[flightKey].length; i++)
+        {
+            address passengerToCredit = insurances[flightKey][i].passenger;
+            uint256 amountToCredit = insurances[flightKey][i].amountPayout;
+            passengerBalance[passengerToCredit] = amountToCredit;
+            insurances[flightKey][i].amountPayout = 0;
+        }
+    // address payable payablePassenger = payable(address(passenger));
+    // payablePassenger.transfer(payoutAmount);
+    }
+
+    function claimInsurance(address passenger)
         requireIsOperational 
         // requireCallerIsAuthorized
         payable
         external
     {
-        require(insurances[passenger][flight].repaymentGranted == true, "Not authorized for repayment");
-        uint256 payoutAmount = insurances[passenger][flight].amountPayout;
-        insurances[passenger][flight].amountPayout = 0;
-        insurances[passenger][flight].repaymentGranted = false;
-        
+        require(passengerBalance[passenger] > 0, "There is nothing to claim");
+        uint256 payout = passengerBalance[passenger];
+        passengerBalance[passenger] = 0;
+
         address payable payablePassenger = payable(address(passenger));
-        payablePassenger.transfer(payoutAmount);
+        payablePassenger.transfer(payout);
     }
     
 
@@ -337,7 +404,7 @@ contract FlightSuretyData {
     //     payable
     //     external
     // {
-    //     require(insurances[passenger][flight].repaymentGranted == true, "payment not authorized");
+    //     require(insurances[passenger][flight].payoutPermitted == true, "payment not authorized");
 
     // }
 
@@ -353,19 +420,6 @@ contract FlightSuretyData {
         public
     {
         // airlineBalances.
-    }
-
-    function getFlightKey
-                        (
-                            address airline,
-                            string memory flight,
-                            uint256 timestamp
-                        )
-                        pure
-                        internal
-                        returns(bytes32) 
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
     /**

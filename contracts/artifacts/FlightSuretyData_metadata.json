@@ -110,6 +110,48 @@
 			{
 				"inputs": [
 					{
+						"internalType": "bytes32",
+						"name": "flightKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "getFlightInfo",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "getFlightKeysForUI",
+				"outputs": [
+					{
+						"internalType": "bytes32[]",
+						"name": "",
+						"type": "bytes32[]"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "address",
 						"name": "passenger",
 						"type": "address"
@@ -172,25 +214,6 @@
 					}
 				],
 				"name": "isAddressAuthorized",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "inputAddress",
-						"type": "address"
-					}
-				],
-				"name": "isAddressFlight",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -306,8 +329,18 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "flightAddress",
+						"name": "airline",
 						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "flightName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
 					}
 				],
 				"name": "registerFlight",
@@ -435,11 +468,11 @@
 	},
 	"sources": {
 		"contracts/FlightSuretyData.sol": {
-			"keccak256": "0xb70679a98715ab5cc3e2ba2d6d08fa1a26aafffcc19c3d32522dc5ffebd88bc3",
+			"keccak256": "0xb8e4652be8e7204ed1c959874c83791a69745c2996c41730f3a55d2735b6057b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://850bae2d2f621bcf8d0930acbf58ed43c281ac92fb7dd81cb59fc5ccb00b1578",
-				"dweb:/ipfs/QmPTq1NsnTsiZDs69XZsuWSEYNQ7k7Cb21BUycnoTsdCvF"
+				"bzz-raw://2f96a01b12530e16db5ecdc3fa2e4712e32df7d57df223b3e830158e823da7d8",
+				"dweb:/ipfs/QmcTwYX7uyvftJh7PANUWNBBgr7Hs17W8JgYdyjS7fDRJB"
 			]
 		},
 		"node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {

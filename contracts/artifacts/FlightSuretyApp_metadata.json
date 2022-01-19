@@ -141,8 +141,20 @@
 					{
 						"indexed": false,
 						"internalType": "address",
-						"name": "flight",
+						"name": "airline",
 						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "string",
+						"name": "flightName",
+						"type": "string"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
 					}
 				],
 				"name": "flightRegistered",
@@ -251,25 +263,6 @@
 					}
 				],
 				"name": "isAddressAirline",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "inputAddress",
-						"type": "address"
-					}
-				],
-				"name": "isAddressFlight",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -400,8 +393,26 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "inputFlightAddress",
+						"name": "inputAirlineAddress",
 						"type": "address"
+					}
+				],
+				"name": "registerAirlineContractOwner",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "flightName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
 					}
 				],
 				"name": "registerFlight",
@@ -425,6 +436,19 @@
 					}
 				],
 				"name": "registerPassenger",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "inputPassengerAddress",
+						"type": "address"
+					}
+				],
+				"name": "registerPassengerContractOwner",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -511,19 +535,19 @@
 	},
 	"sources": {
 		"contracts/FlightSuretyApp.sol": {
-			"keccak256": "0x80d57793abc5530b9881b8dca915813f6cf0caa9bdc808909b433898150a2a07",
+			"keccak256": "0xbc929596562061544269e0303b4b4a775a05673654b1cfadf29e23cdfdae25b2",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://2e6b674b735d66ce171018ea5ddb7d4d3b4835cd3f4959b2ae5bfade800e3a39",
-				"dweb:/ipfs/Qmai98ZJZxWW2hAB43gJBohWMvC9PKGbAZ9ZRLU1reAQGs"
+				"bzz-raw://183186651067ce8250dd10a7523f0a3dea08138ccccdc7dea00641f42588eeb0",
+				"dweb:/ipfs/QmNqYat5KU6dwxgpmReSmHgJpfuspV7PsjcAmiD1LS2g8D"
 			]
 		},
 		"contracts/FlightSuretyData.sol": {
-			"keccak256": "0xb70679a98715ab5cc3e2ba2d6d08fa1a26aafffcc19c3d32522dc5ffebd88bc3",
+			"keccak256": "0xb8e4652be8e7204ed1c959874c83791a69745c2996c41730f3a55d2735b6057b",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://850bae2d2f621bcf8d0930acbf58ed43c281ac92fb7dd81cb59fc5ccb00b1578",
-				"dweb:/ipfs/QmPTq1NsnTsiZDs69XZsuWSEYNQ7k7Cb21BUycnoTsdCvF"
+				"bzz-raw://2f96a01b12530e16db5ecdc3fa2e4712e32df7d57df223b3e830158e823da7d8",
+				"dweb:/ipfs/QmcTwYX7uyvftJh7PANUWNBBgr7Hs17W8JgYdyjS7fDRJB"
 			]
 		},
 		"node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {
