@@ -1,6 +1,10 @@
-
 var Test = require('../config/testConfig.js');
-//var BigNumber = require('bignumber.js');
+var BigNumber = require('bignumber.js');
+var FlightSuretyApp = artifacts.require("FlightSuretyApp");
+var FlightSuretyData = artifacts.require("FlightSuretyData");
+
+let flightSuretyData = null;
+let flightSuretyApp = null;
 
 contract('Oracles', async (accounts) => {
 

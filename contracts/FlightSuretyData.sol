@@ -43,8 +43,7 @@ contract FlightSuretyData {
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
-    event airlineRegistered(address);
-    event insurancePayoutClaimable(address);
+    event dataContractFunded();
 
     /**
     * @dev Constructor
@@ -195,24 +194,15 @@ contract FlightSuretyData {
         return isPassenger[inputAddress];
     }
 
-    // function isInsuranceCollectable(address passenger, string memory flightName)
-    //     external
-    //     view
-    //     requireIsOperational
-    //     returns(bool)
-    // {
-    //     return insurances[passenger][flightName].payoutPermitted;
-    // }
-
-    // function getInsurancePayoutAmount(address passenger, string memory flightName)
-    //     external
-    //     view
-    //     requireIsOperational
-    //     // requireCallerIsAuthorized
-    //     returns(uint256)
-    // {
-    //     return insurances[passenger][flightName].amountPayout;
-    // }
+    function getInsurancePayoutAmount(address passenger)
+        external
+        view
+        requireIsOperational
+        requireCallerIsAuthorized
+        returns(uint256)
+    {
+        return passengerBalance[passenger];
+    }
 
     function getNumAirlines()
         external
@@ -285,16 +275,15 @@ contract FlightSuretyData {
 
     function payAirlineFee(address airlineAddress)
         requireIsOperational
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         external 
     {
-        // require(msg.sender == airlineAddress, "An airline can only pay for their own funding fee");
         isAirlineFeePaid[airlineAddress] = true;
     }
 
     function registerPassenger(address passengerAddress) 
         requireIsOperational 
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         external
     {
         passengers.push(passengerAddress);
@@ -304,7 +293,7 @@ contract FlightSuretyData {
 
     function registerFlight(address airline, string memory flightName, uint256 timestamp) 
         requireIsOperational 
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         external
         returns (bytes32)
     {
@@ -316,7 +305,7 @@ contract FlightSuretyData {
 
     function getFlightInfo(bytes32 flightKey)
         requireIsOperational 
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         external
         view
         returns (address, string memory, uint256)
@@ -333,8 +322,7 @@ contract FlightSuretyData {
     */   
     function buy(address passenger, string memory flightName, uint256 value, address airline, uint256 timeStamp)                             
         requireIsOperational 
-        // requireCallerIsAuthorized
-        // payable
+        requireCallerIsAuthorized
         external
     {
         bytes32 flightKey = getFlightKey(airline, flightName, timeStamp);
@@ -347,24 +335,12 @@ contract FlightSuretyData {
         insurances[flightKey].push(newInsurance);
     }
 
-    // function setRepaymentStatus(address airline, string memory flight, uint256 timestamp, bool status)
-    //     requireIsOperational 
-    //     // requireCallerIsAuthorized
-    //     external
-    // {
-    //     bytes32 flightKey = getFlightKey(airline, flight, timestamp);
-    //     for (uint16 i = 0; i < insurances[flightKey].length; i++)
-    //     {
-    //         insurances[flightKey][i].payoutPermitted = status;
-    //     }
-    // }
-
     /**
      *  @dev Credits payouts to insurees
     */
     function creditInsurees(address airline, string memory flight, uint256 timestamp)
         requireIsOperational 
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         external
     {
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
@@ -375,13 +351,11 @@ contract FlightSuretyData {
             passengerBalance[passengerToCredit] = amountToCredit;
             insurances[flightKey][i].amountPayout = 0;
         }
-    // address payable payablePassenger = payable(address(passenger));
-    // payablePassenger.transfer(payoutAmount);
     }
 
     function claimInsurance(address passenger)
         requireIsOperational 
-        // requireCallerIsAuthorized
+        requireCallerIsAuthorized
         payable
         external
     {
@@ -390,56 +364,36 @@ contract FlightSuretyData {
         passengerBalance[passenger] = 0;
 
         address payable payablePassenger = payable(address(passenger));
-        payablePassenger.transfer(payout);
+        safeTransfer(payablePassenger, payout);
     }
     
 
-    /**
-     *  @dev Transfers eligible payout funds to insuree
-     *
-    */
-    // function pay(address passenger, address flight)
-    //     requireIsOperational 
-    //     // requireCallerIsAuthorized
-    //     payable
-    //     external
-    // {
-    //     require(insurances[passenger][flight].payoutPermitted == true, "payment not authorized");
-
-    // }
-
-   /**
-    * @dev Initial funding for the insurance. Unless there are too many delayed flights
-    *      resulting in insurance payouts, the contract should be self-sustaining
-    *
-    */   
-    function fund() 
-        requireIsOperational 
-        // requireIsAirline
-        // payable 
+    //https://solidity-by-example.org/sending-ether/
+    function safeTransfer(address payable _to, uint256 _amount)
+        requireIsOperational
+        payable 
         public
     {
-        // airlineBalances.
+        //https://solidity-by-example.org/sending-ether/
+        (bool sent, bytes memory data) = _to.call{value: _amount}("");
+        require(sent, "Failed to send Ether");
     }
 
-    /**
-    * @dev Fallback function for funding smart contract.
-    *
-    */
+    function fund()
+        payable
+        external
+    {
+        safeTransfer(payable(address(this)), msg.value);
+    }
+
     fallback() external payable 
     {
-        fund();
+        // emit dataContractFunded();
     }
 
-    //suggested by user "Yarode" in FlightSurety Template:
-    //https://github.com/yarode/FlightSurety/commit/cd75f8017e769280d7216ffb3603d97f3903552f
-    /**
-    * @dev Receive function for funding smart contract
-    *
-    */
     receive() external payable
     {
-        fund();
+        // emit dataContractFunded();
     }
 }
 

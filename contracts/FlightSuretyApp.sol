@@ -269,12 +269,12 @@ contract FlightSuretyApp {
         uint256 changeToSendBack = msg.value - AIRLINE_FUNDING_FEE; 
         if (changeToSendBack > 0)
         {
-            payableContract.transfer(AIRLINE_FUNDING_FEE);
-            payable(msg.sender).transfer(changeToSendBack);
+            safeTransfer(payableContract, AIRLINE_FUNDING_FEE);
+            safeTransfer(payable(msg.sender), changeToSendBack);
         }
         else
         {
-            payableContract.transfer(AIRLINE_FUNDING_FEE);
+            safeTransfer(payableContract, AIRLINE_FUNDING_FEE);
         }
         dataContract.payAirlineFee(msg.sender);
         emit airlineFeesPaid(msg.sender);
@@ -294,7 +294,7 @@ contract FlightSuretyApp {
 
     function registerPassengerContractOwner(address inputPassengerAddress)
         public
-        // requireIsOperational
+        requireIsOperational
         // requireContractOwner
     {
         require(dataContract.isAddressPassenger(inputPassengerAddress) == false, "address is already a passenger!");
@@ -331,7 +331,7 @@ contract FlightSuretyApp {
     {
         require(msg.value <= INSURANCE_LIMIT, "Insurance Contributions may not exceed 1 ether");
         address payable payableContract = payable(address(dataContract));
-        payableContract.transfer(msg.value);
+        safeTransfer(payableContract, msg.value);
 
         dataContract.buy(msg.sender, flightName, msg.value, airlineAddress, timeStamp);
         emit passengerBoughtInsurance(msg.sender, airlineAddress, flightName, msg.value);
@@ -346,13 +346,21 @@ contract FlightSuretyApp {
         dataContract.claimInsurance(msg.sender);
     }
 
-    function fund()
+    //https://solidity-by-example.org/sending-ether/
+    function safeTransfer(address payable _to, uint256 _amount)
         public
         payable
         requireIsOperational
     {
-        address payable payableContract = payable(address(dataContract));
-        payableContract.transfer(msg.value);
+        (bool sent, bytes memory data) = _to.call{value: _amount}("");
+        require(sent, "Failed to send Ether");
+    }
+
+    receive() 
+        external 
+        payable
+    {
+        //safeTransfer(payable(address(dataContract)), msg.value);
     }
 
     
@@ -363,7 +371,7 @@ contract FlightSuretyApp {
     function processFlightStatus(
         address airline, string memory flight,
         uint256 timestamp, uint8 statusCode)
-        internal
+        public
     {
         if (    statusCode == STATUS_CODE_LATE_AIRLINE )
             // ||  statusCode == STATUS_CODE_LATE_WEATHER
@@ -375,13 +383,8 @@ contract FlightSuretyApp {
 
 
     // Generate a request for oracles to fetch flight information
-    function fetchFlightStatus
-                        (
-                            address airline,
-                            string memory flight,
-                            uint256 timestamp                            
-                        )
-                        external
+    function fetchFlightStatus( address airline, string memory flight, uint256 timestamp )
+        external
     {
         uint8 index = getRandomIndex(msg.sender);
 
@@ -393,7 +396,7 @@ contract FlightSuretyApp {
                                             });
 
         emit OracleRequest(index, airline, flight, timestamp);
-    } 
+    }
 
 
 // region ORACLE MANAGEMENT
@@ -444,11 +447,9 @@ contract FlightSuretyApp {
 
 
     // Register an oracle with the contract
-    function registerOracle
-                            (
-                            )
-                            external
-                            payable
+    function registerOracle()
+        external
+        payable
     {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
@@ -461,12 +462,10 @@ contract FlightSuretyApp {
                                     });
     }
 
-    function getMyIndexes
-                            (
-                            )
-                            view
-                            external
-                            returns(uint8[3] memory)
+    function getMyIndexes()
+        view
+        external
+        returns(uint8[3] memory)
     {
         require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
 
@@ -474,21 +473,13 @@ contract FlightSuretyApp {
     }
 
 
-
-
     // Called by oracle when a response is available to an outstanding request
     // For the response to be accepted, there must be a pending request that is open
     // and matches one of the three Indexes randomly assigned to the oracle at the
     // time of registration (i.e. uninvited oracles are not welcome)
-    function submitOracleResponse
-                        (
-                            uint8 index,
-                            address airline,
-                            string memory flight,
-                            uint256 timestamp,
-                            uint8 statusCode
-                        )
-                        external
+    function submitOracleResponse(uint8 index, address airline,
+        string memory flight, uint256 timestamp, uint8 statusCode)
+        external
     {
         require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
 

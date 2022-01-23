@@ -11,6 +11,12 @@ const NUM_CONSENSUS_MIN = 4;
 const CONSENSUS_FACTOR = 2; //Multi-party consensus divising factor (ex: 2 = 50%, 4 = 25%, etc...)
 const insurance_limit = Web3.utils.toWei("1","ether");
 const funding_fee = Web3.utils.toWei("10","ether");
+const STATUS_CODE_UNKNOWN = 0;
+const STATUS_CODE_ON_TIME = 10;
+const STATUS_CODE_LATE_AIRLINE = 20;
+const STATUS_CODE_LATE_WEATHER = 30;
+const STATUS_CODE_LATE_TECHNICAL = 40;
+const STATUS_CODE_LATE_OTHER = 50;
 
 
 contract('Flight Surety Tests', async (accounts) => {
@@ -24,6 +30,7 @@ contract('Flight Surety Tests', async (accounts) => {
     let globalFlightName = "Spirit 777";
     let globalFightKey;
     let globalTimeStamp;
+    var BN = web3.utils.BN;
 
     let testAddresses = [
         "0x69e1CB5cFcA8A311586e3406ed0301C06fb839a2",
@@ -161,18 +168,23 @@ contract('Flight Surety Tests', async (accounts) => {
   });
 
   it('(airline) fund the first airline', async () => {
+
+    let firstBalance = await web3.eth.getBalance(flightSuretyData.address);
     
     let isFunded = await flightSuretyApp.isAddressFundedAirline(owner);
 
     assert.equal(isFunded, false, "Airline should not be considered funded yet");
     
     // ARRANGE
-    await flightSuretyApp.payAirlineFee({value: funding_fee});
+    await flightSuretyApp.payAirlineFee({from: owner, value: funding_fee});
 
     isFunded = await flightSuretyApp.isAddressFundedAirline(owner);
 
+    let secondBalance = await web3.eth.getBalance(flightSuretyData.address);
+    let sum = new BN(firstBalance).add(new BN(funding_fee));
     //ASSERT
     assert.equal(isFunded, true, "Airline should have been considered funded");
+    assert.deepEqual(secondBalance, sum.toString(), "dataContract should have been transfered eth for funding");
   });
  
   it('(airline) 5th registered Airline becomes queued', async () => {
@@ -225,15 +237,15 @@ contract('Flight Surety Tests', async (accounts) => {
         
     // ARRANGE
     let revert1 = false;
-    gloalTimeStamp = BigNumber(Date.now() + 100000);
+    globalTimeStamp = BigNumber(Date.now() + 100000);
     try {
-        await flightSuretyApp.registerFlight(globalFlightName, gloalTimeStamp, {from: passenger});
+        await flightSuretyApp.registerFlight(globalFlightName, globalTimeStamp, {from: passenger});
     } catch (error) {
         revert1 = true;
     }
     let revert2 = false;
     try {
-        globalFightKey = await flightSuretyApp.registerFlight(globalFlightName, gloalTimeStamp, {from: airline2});
+        globalFightKey = await flightSuretyApp.registerFlight(globalFlightName, globalTimeStamp, {from: airline2});
     } catch (error) {
         revert2 = true;
     }
@@ -246,20 +258,19 @@ contract('Flight Surety Tests', async (accounts) => {
   it('(passengers) Passenger Buys Insurance and collects payout', async () => {
         
     // ARRANGE
+    let originalBalance = new BN(await web3.eth.getBalance(passenger));
 
     await flightSuretyApp.registerPassenger(passenger, {from: passenger});
 
-    await flightSuretyApp.passengerBuysInsurance(airline2, globalFlightName, {from: passenger, value:insurance_limit});
+    await flightSuretyApp.passengerBuysInsurance(airline2, globalFlightName, globalTimeStamp, {from: passenger, value:insurance_limit});
 
-    await flightSuretyData.setRepaymentStatus(passenger, globalFlightName, true);
+    await flightSuretyApp.processFlightStatus(airline2, globalFlightName, globalTimeStamp, STATUS_CODE_LATE_AIRLINE);
 
-    let OldBalance = await web3.eth.getBalance(passenger);
+    await flightSuretyApp.claimInsurancePayout({from: passenger});
 
-    await flightSuretyApp.passengerCollectsInsurancePayout(globalFlightName, {from: passenger});
+    let newBalance = new BN(await web3.eth.getBalance(passenger));
 
-    let newBalance = await web3.eth.getBalance(passenger);
-
-    assert.notEqual(OldBalance, newBalance);
+    assert.notEqual(newBalance.toString(), originalBalance.toString(), "Unexepected wallet balance occured")
   });
  
 });
