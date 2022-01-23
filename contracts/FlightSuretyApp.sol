@@ -146,6 +146,7 @@ contract FlightSuretyApp {
 
         //contractOwner is the first airline
         registerInitialAirline(contractOwner);
+        // dataContract.addAuthorizedCaller(address(this));
     }
 
     /********************************************************************************************/
@@ -311,6 +312,17 @@ contract FlightSuretyApp {
         bytes32 flightKey = dataContract.registerFlight(msg.sender, flightName, timestamp);
         emit flightRegistered(msg.sender, flightName, timestamp);
         return flightKey;
+    }
+
+    function getAllFlights()
+        public
+        view
+        requireIsOperational
+        returns (address, string memory, uint256 )
+    {
+        bytes32[] memory keys = dataContract.getFlightKeysForUI();
+        (address airline, string memory flightName, uint256 timeStamp) = getFlightInfo(keys[0]);
+        return (airline, flightName, timeStamp);
     }
 
     function getFlightInfo(bytes32 flightKey)

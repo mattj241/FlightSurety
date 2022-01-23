@@ -54,12 +54,6 @@ contract('Flight Surety Tests', async (accounts) => {
   /* Operations and Settings                                                              */
   /****************************************************************************************/
 
-//   it(`(housekeeping) make sure owner is the first airline`)
-//   {
-//       let result = await flightSuretyData.isAddressAirline(owner);
-//       assert.equal(owner, result );
-//   }
-
   it(`(multiparty) has correct initial isOperational() value`, async function () {
 
     // Get operating status
@@ -100,7 +94,7 @@ contract('Flight Surety Tests', async (accounts) => {
       await flightSuretyData.setOperatingStatus(true, { from: owner });
   });
 
-  it(`(multiparty) is contractOwner an authorizedCaller`, async function () {
+  it(`(multiparty) is the app contract an authorizedCaller`, async function () {
 
     let result = await flightSuretyData.getAirline(0);
     assert.equal(owner,result);

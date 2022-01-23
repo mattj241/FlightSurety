@@ -123,10 +123,12 @@ contract FlightSuretyData {
     }
 
     function addAuthorizedCaller (address inputAddress) 
-        external 
+        external
         requireContractOwner
+        returns (bool)
     {
         isAddressAuthorized[inputAddress] = true;
+        return isAddressAuthorized[inputAddress];
     }
 
     function removeAuthorizedCaller (address inputAddress) 

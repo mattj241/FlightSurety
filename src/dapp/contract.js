@@ -8,6 +8,7 @@ export default class Contract {
         let config = Config[network];
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+        this.flightSuretyData = new this.web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
         this.initialize(callback);
         this.owner = null;
         this.airlines = [];
@@ -24,7 +25,7 @@ export default class Contract {
                 inputAirlineAddress : this.airlines[counter]
             }
             self.flightSuretyApp.methods
-                .registerAirlineContractOwner(payload.inputAirlineAddress)
+                .registerAirline(payload.inputAirlineAddress)
                 .send({ from: self.owner, gas: 3000000 }, (error, result) => {
                     callback(error, payload);
                 });
@@ -40,7 +41,7 @@ export default class Contract {
                 inputPassengerAddress : this.passengers[counter]
             }
             self.flightSuretyApp.methods
-                .registerPassengerContractOwner(payload.inputPassengerAddress)
+                .registerPassenger(payload.inputPassengerAddress)
                 .send({ from: self.owner, gas: 3000000 }, (error, result) => {
                     callback(error, payload);
                 });
@@ -58,7 +59,7 @@ export default class Contract {
                 flightName : defaultFlightNames[counter]
             }
             self.flightSuretyApp.methods
-                .registerFlightContractOwner(payload.inputFlightAddress, payload.flightName)
+                .registerFlight(payload.inputFlightAddress, payload.flightName)
                 .send({ from: self.owner, gas: 3000000 }, (error, result) => {
                     callback(error, payload);
                 });
@@ -86,7 +87,6 @@ export default class Contract {
 
             callback();
         });
-        // this.getFlightInfo();
     }
 
     loadDefaultData(callback){
@@ -103,12 +103,12 @@ export default class Contract {
             .call({ from: self.owner}, callback);
     }
 
-    getNumFlights(callback) {
-        let self = this;
-        self.flightSuretyApp.methods
-             .getNumFlights()
-             .call({ from: self.owner, gas: 3000000}, callback);
-     }
+    // getNumFlights(callback) {
+    //     let self = this;
+    //     self.flightSuretyApp.methods
+    //          .getNumFlights()
+    //          .call({ from: self.owner, gas: 3000000}, callback);
+    //  }
 
      getFlightInfoByIndex(index, callback) {
         let self = this;
@@ -125,7 +125,7 @@ export default class Contract {
      getFlightInfo(callback) {
         let self = this;
         self.flightSuretyApp.methods
-             .getFlightInfoAllData()
+             .getAllFlights()
              .call({ from: self.owner, gas: 3000000}, (error, result) => {
                 callback(error, result);
             });

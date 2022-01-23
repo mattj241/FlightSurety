@@ -7,8 +7,14 @@
 		"abi": [
 			{
 				"inputs": [],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "constructor"
+			},
+			{
+				"anonymous": false,
+				"inputs": [],
+				"name": "dataContractFunded",
+				"type": "event"
 			},
 			{
 				"stateMutability": "payable",
@@ -35,13 +41,23 @@
 						"type": "address"
 					},
 					{
-						"internalType": "address",
-						"name": "flight",
-						"type": "address"
+						"internalType": "string",
+						"name": "flightName",
+						"type": "string"
 					},
 					{
 						"internalType": "uint256",
 						"name": "value",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "airline",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timeStamp",
 						"type": "uint256"
 					}
 				],
@@ -56,39 +72,57 @@
 						"internalType": "address",
 						"name": "passenger",
 						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "flight",
-						"type": "address"
 					}
 				],
-				"name": "creditInsurees",
+				"name": "claimInsurance",
 				"outputs": [],
 				"stateMutability": "payable",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "fund",
-				"outputs": [],
-				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "input",
+						"name": "airline",
 						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "flight",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
 					}
 				],
-				"name": "getAuthCaller",
+				"name": "creditInsurees",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "fund",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "index",
+						"type": "uint256"
+					}
+				],
+				"name": "getAirline",
 				"outputs": [
 					{
-						"internalType": "bool",
+						"internalType": "address",
 						"name": "",
-						"type": "bool"
+						"type": "address"
 					}
 				],
 				"stateMutability": "view",
@@ -155,11 +189,6 @@
 						"internalType": "address",
 						"name": "passenger",
 						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "flight",
-						"type": "address"
 					}
 				],
 				"name": "getInsurancePayoutAmount",
@@ -213,25 +242,6 @@
 						"type": "address"
 					}
 				],
-				"name": "isAddressAuthorized",
-				"outputs": [
-					{
-						"internalType": "bool",
-						"name": "",
-						"type": "bool"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "inputAddress",
-						"type": "address"
-					}
-				],
 				"name": "isAddressFundedAirline",
 				"outputs": [
 					{
@@ -266,16 +276,11 @@
 				"inputs": [
 					{
 						"internalType": "address",
-						"name": "passenger",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "flight",
+						"name": "inputAddress",
 						"type": "address"
 					}
 				],
-				"name": "isInsuranceCollectable",
+				"name": "isCallerAuthorized",
 				"outputs": [
 					{
 						"internalType": "bool",
@@ -329,6 +334,19 @@
 				"inputs": [
 					{
 						"internalType": "address",
+						"name": "initialAirline",
+						"type": "address"
+					}
+				],
+				"name": "registerFirstAirline",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
 						"name": "airline",
 						"type": "address"
 					},
@@ -344,7 +362,13 @@
 					}
 				],
 				"name": "registerFlight",
-				"outputs": [],
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -377,35 +401,30 @@
 			{
 				"inputs": [
 					{
+						"internalType": "address payable",
+						"name": "_to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "safeTransfer",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "bool",
 						"name": "mode",
 						"type": "bool"
 					}
 				],
 				"name": "setOperatingStatus",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "passenger",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "flight",
-						"type": "address"
-					},
-					{
-						"internalType": "bool",
-						"name": "status",
-						"type": "bool"
-					}
-				],
-				"name": "setRepaymentStatus",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -418,17 +437,14 @@
 		"devdoc": {
 			"kind": "dev",
 			"methods": {
-				"buy(address,address,uint256)": {
+				"buy(address,string,uint256,address,uint256)": {
 					"details": "Buy insurance for a flight"
 				},
 				"constructor": {
 					"details": "Constructor      The deploying account becomes contractOwner"
 				},
-				"creditInsurees(address,address)": {
+				"creditInsurees(address,string,uint256)": {
 					"details": "Credits payouts to insurees"
-				},
-				"fund()": {
-					"details": "Initial funding for the insurance. Unless there are too many delayed flights      resulting in insurance payouts, the contract should be self-sustaining"
 				},
 				"isOperational()": {
 					"details": "Get operating status of contract",
@@ -468,11 +484,11 @@
 	},
 	"sources": {
 		"contracts/FlightSuretyData.sol": {
-			"keccak256": "0xb8e4652be8e7204ed1c959874c83791a69745c2996c41730f3a55d2735b6057b",
+			"keccak256": "0x128a6a236169671a5d3a70096db277c893af7fe42122e643c3ac9dd65598137a",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://2f96a01b12530e16db5ecdc3fa2e4712e32df7d57df223b3e830158e823da7d8",
-				"dweb:/ipfs/QmcTwYX7uyvftJh7PANUWNBBgr7Hs17W8JgYdyjS7fDRJB"
+				"bzz-raw://1317eed7ec9402a570e2b54772f0e60f380d183333a4820bbe32b27c7eae2ae3",
+				"dweb:/ipfs/QmazBGwTTJURLC6bgGLU4YuYyftTKN7Vj9mhfJvYFVXs94"
 			]
 		},
 		"node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {

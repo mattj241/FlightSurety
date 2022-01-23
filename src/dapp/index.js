@@ -34,16 +34,15 @@ import './flightsurety.css';
         })
 
         DOM.elid('get-flights').addEventListener('click', () => {
-            let numFlights = 0;
+            let airlines = new Array();
             let flightAddresses = new Array();
             let flightNames = new Array();
             let list = document.getElementById("flight-list");
-            contract.getNumFlights((error, result) => {
-                console.log(error,result);
-                numFlights = result.value;
-            });
             contract.getFlightInfo((error, result) => {
                 console.log(result);
+                result[2].forEach(address => {
+                    airlines.push(address)
+                });
                 result[1].forEach(address => {
                     flightAddresses.push(address)
                 });
@@ -52,7 +51,7 @@ import './flightsurety.css';
                 });
                 for (var i = 0; i<flightAddresses.length;i++)
                 {
-                    var obj = "Flight Number: "+ flightAddresses[i] + "    Flight Address: " + flightNames[i];
+                    var obj = "Airline: "+ airlines[i] + "    Flight Number: "+ flightAddresses[i] + "    Flight Address: " + flightNames[i];
                     var li = document.createElement("li");
                     li.textContent = obj;
                     list.appendChild(li);
