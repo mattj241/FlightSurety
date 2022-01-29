@@ -9,6 +9,7 @@ let provider;
 let web3;
 let accounts;
 let flightSuretyApp;
+const status_code = [0, 10, 20, 30, 40, 50];
 
 async function initWeb3() {
   let config = Config['localhost'];
@@ -22,11 +23,9 @@ async function initWeb3() {
 const oracles = [];
 
 async function submitOracleResponse(data, account) {
-  
-  console.log(data.index, data.airline, data.flight, data.timestamp);
 
-  const statusAvailable = [0, 10, 20, 30, 40, 50];
-  let statusCode = Math.floor(Math.random() * statusAvailable.length);
+  let statusCode = status_code[Math.floor(Math.random() * status_code.length)];
+  console.log(data.oracleIndex, data.airline, data.flight, data.timestamp, statusCode);
 
   try {
       await flightSuretyApp.methods.submitOracleResponse(
@@ -39,7 +38,7 @@ async function submitOracleResponse(data, account) {
           from: account
       });
   } catch (e) {
-      console.log(e.reason);
+      console.log("error " + e.reason);
   }
 }
 

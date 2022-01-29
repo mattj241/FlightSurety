@@ -200,7 +200,7 @@ contract FlightSuretyData {
         external
         view
         requireIsOperational
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         returns(uint256)
     {
         return passengerBalance[passenger];
@@ -210,7 +210,7 @@ contract FlightSuretyData {
         external
         view
         requireIsOperational
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         returns(uint)
     {
         return airlines.length;
@@ -252,7 +252,7 @@ contract FlightSuretyData {
     */   
     function registerAirline(address airlineAddress) 
         requireIsOperational 
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         external
     {
         airlines.push(airlineAddress);
@@ -277,7 +277,7 @@ contract FlightSuretyData {
 
     function payAirlineFee(address airlineAddress)
         requireIsOperational
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         external 
     {
         isAirlineFeePaid[airlineAddress] = true;
@@ -285,7 +285,7 @@ contract FlightSuretyData {
 
     function registerPassenger(address passengerAddress) 
         requireIsOperational 
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         external
     {
         passengers.push(passengerAddress);
@@ -295,7 +295,7 @@ contract FlightSuretyData {
 
     function registerFlight(address airline, string memory flightName, uint256 timestamp) 
         requireIsOperational 
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         external
         returns (bytes32)
     {
@@ -307,15 +307,15 @@ contract FlightSuretyData {
 
     function getFlightInfo(bytes32 flightKey)
         requireIsOperational 
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         external
         view
         returns (address, string memory, uint256)
     {
-        address airline = flights[flightKey].airline;
+        address airlineAddress = flights[flightKey].airline;
         string memory name = flights[flightKey].flightName;
         uint256 timeStamp = flights[flightKey].updatedTimestamp;
-        return (airline, name, timeStamp);
+        return (airlineAddress, name, timeStamp);
     }
 
    /**
@@ -324,7 +324,7 @@ contract FlightSuretyData {
     */   
     function buy(address passenger, string memory flightName, uint256 value, address airline, uint256 timeStamp)                             
         requireIsOperational 
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         external
     {
         bytes32 flightKey = getFlightKey(airline, flightName, timeStamp);
@@ -342,7 +342,7 @@ contract FlightSuretyData {
     */
     function creditInsurees(address airline, string memory flight, uint256 timestamp)
         requireIsOperational 
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         external
     {
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
@@ -357,7 +357,7 @@ contract FlightSuretyData {
 
     function claimInsurance(address passenger)
         requireIsOperational 
-        requireCallerIsAuthorized
+        // requireCallerIsAuthorized
         payable
         external
     {

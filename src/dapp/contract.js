@@ -1,4 +1,5 @@
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 
@@ -13,7 +14,6 @@ export default class Contract {
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
-        this.flights = [];
     }
 
     registerAirlines(callback) {
@@ -48,24 +48,6 @@ export default class Contract {
         }
     }
 
-    registerFlights(callback) {
-        let defaultFlightNames = ['Delta 1080', 'Spirit 123444', 'United 24', 'Ryanair 1500']
-        let self = this;
-        let counter = 0;
-        for(counter; counter < this.flights.length; counter++)
-        {
-            let payload = {
-                inputFlightAddress : this.flights[counter],
-                flightName : defaultFlightNames[counter]
-            }
-            self.flightSuretyApp.methods
-                .registerFlight(payload.inputFlightAddress, payload.flightName)
-                .send({ from: self.owner, gas: 3000000 }, (error, result) => {
-                    callback(error, payload);
-                });
-        }
-    }
-
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
            
@@ -81,19 +63,27 @@ export default class Contract {
                 this.passengers.push(accts[counter++]);
             }
 
-            while(this.flights.length < 3) {
-                this.flights.push(accts[counter++]);
-            }
-
             callback();
         });
     }
 
     loadDefaultData(callback){
         let self = this;
-        self.registerAirlines(callback);
-        self.registerPassengers(callback);
-        self.registerFlights(callback);
+        let defaultFlightnames = ['Delta 1080', 'Spirit 123444', 'United 24'];
+        //                     roughly 1 day from now,         2 days,             3 days
+        let defaultFlightTimes = [Date.now() + 86000, Date.now() + 172000, Date.now() + 258000 ];
+        let payload = {
+            defaultAirlines : self.airlines,
+            defaultPassengers : self.passengers,
+            defaultFlightNames : defaultFlightnames,
+            defaultTimeStamps :  defaultFlightTimes
+        }
+        self.flightSuretyApp.methods
+            .loadDefaultContractDataForUIDemo(payload.defaultAirlines, payload.defaultPassengers, payload.defaultFlightNames, payload.defaultTimeStamps)
+            .send({ from: self.owner, gas: 3000000 }, (error, result) => {
+                callback(error, payload);
+                console.log(self.owner);
+            });
     }
 
     isOperational(callback) {
@@ -102,13 +92,6 @@ export default class Contract {
             .isOperational()
             .call({ from: self.owner}, callback);
     }
-
-    // getNumFlights(callback) {
-    //     let self = this;
-    //     self.flightSuretyApp.methods
-    //          .getNumFlights()
-    //          .call({ from: self.owner, gas: 3000000}, callback);
-    //  }
 
      getFlightInfoByIndex(index, callback) {
         let self = this;
@@ -122,7 +105,7 @@ export default class Contract {
             });
      }
 
-     getFlightInfo(callback) {
+     getAllFlights(callback) {
         let self = this;
         self.flightSuretyApp.methods
              .getAllFlights()
@@ -131,19 +114,19 @@ export default class Contract {
             });
      }
 
-     submitInsuranceRequest(flightAddress, flightName, amountEther, callback) {
+     submitInsuranceRequest(flightAddress, flightName, timeStamp, amountEther, callback) {
          let self = this;
          self.flightSuretyApp.methods
-            .passengerBuysInsurance(flightAddress)
-            .call({from: self.passengers[0], gas: 3000000, value: "10000000000000000000"}, (error, result) => {
+            .passengerBuysInsurance(flightAddress, flightName, timeStamp)
+            .call({from: self.passengers[0], gas: 3000000, value: amountEther}, (error, result) => {
                 callback(error, result);
             });
      }
 
-    fetchFlightStatus(flight, callback) {
+    fetchFlightStatus(flight, airline, callback) {
         let self = this;
         let payload = {
-            airline: self.airlines[0],
+            airline: airline,
             flight: flight,
             timestamp: Math.floor(Date.now() / 1000)
         } 

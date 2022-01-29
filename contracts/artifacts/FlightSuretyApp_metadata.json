@@ -177,6 +177,12 @@
 					},
 					{
 						"indexed": false,
+						"internalType": "string",
+						"name": "flightName",
+						"type": "string"
+					},
+					{
+						"indexed": false,
 						"internalType": "uint256",
 						"name": "insuranceAmount",
 						"type": "uint256"
@@ -212,6 +218,13 @@
 				"type": "function"
 			},
 			{
+				"inputs": [],
+				"name": "claimInsurancePayout",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
 				"inputs": [
 					{
 						"internalType": "address",
@@ -236,9 +249,54 @@
 			},
 			{
 				"inputs": [],
-				"name": "fund",
-				"outputs": [],
-				"stateMutability": "payable",
+				"name": "getAllFlights",
+				"outputs": [
+					{
+						"internalType": "address[]",
+						"name": "",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "",
+						"type": "uint256[]"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "bytes32",
+						"name": "flightKey",
+						"type": "bytes32"
+					}
+				],
+				"name": "getFlightInfo",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
 				"type": "function"
 			},
 			{
@@ -346,9 +404,47 @@
 			{
 				"inputs": [
 					{
+						"internalType": "address[]",
+						"name": "defaultAirlines",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "defaultPassengers",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "defaultFlightNames",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint256[]",
+						"name": "defaultTimeStamps",
+						"type": "uint256[]"
+					}
+				],
+				"name": "loadDefaultContractDataForUIDemo",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
 						"internalType": "address",
-						"name": "inputFlightAddress",
+						"name": "airlineAddress",
 						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "flightName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timeStamp",
+						"type": "uint256"
 					}
 				],
 				"name": "passengerBuysInsurance",
@@ -357,23 +453,38 @@
 				"type": "function"
 			},
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "inputFlightAddress",
-						"type": "address"
-					}
-				],
-				"name": "passengerCollectsInsurancePayout",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
 				"inputs": [],
 				"name": "payAirlineFee",
 				"outputs": [],
 				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "airline",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "flight",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "statusCode",
+						"type": "uint8"
+					}
+				],
+				"name": "processFlightStatus",
+				"outputs": [],
+				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
@@ -392,19 +503,6 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
-						"name": "inputAirlineAddress",
-						"type": "address"
-					}
-				],
-				"name": "registerAirlineContractOwner",
-				"outputs": [],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
 						"internalType": "string",
 						"name": "flightName",
 						"type": "string"
@@ -416,6 +514,25 @@
 					}
 				],
 				"name": "registerFlight",
+				"outputs": [
+					{
+						"internalType": "bytes32",
+						"name": "",
+						"type": "bytes32"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "inputAirlineAddress",
+						"type": "address"
+					}
+				],
+				"name": "registerInitialAirline",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
@@ -443,14 +560,19 @@
 			{
 				"inputs": [
 					{
-						"internalType": "address",
-						"name": "inputPassengerAddress",
+						"internalType": "address payable",
+						"name": "_to",
 						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
 					}
 				],
-				"name": "registerPassengerContractOwner",
+				"name": "safeTransfer",
 				"outputs": [],
-				"stateMutability": "nonpayable",
+				"stateMutability": "payable",
 				"type": "function"
 			},
 			{
@@ -498,6 +620,10 @@
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
+			},
+			{
+				"stateMutability": "payable",
+				"type": "receive"
 			}
 		],
 		"devdoc": {
@@ -506,8 +632,8 @@
 				"constructor": {
 					"details": "Contract constructor"
 				},
-				"registerAirline(address)": {
-					"details": "Add an airline to the registration queue"
+				"processFlightStatus(address,string,uint256,uint8)": {
+					"details": "Called after oracle has updated flight status"
 				}
 			},
 			"version": 1
@@ -535,19 +661,19 @@
 	},
 	"sources": {
 		"contracts/FlightSuretyApp.sol": {
-			"keccak256": "0xbc929596562061544269e0303b4b4a775a05673654b1cfadf29e23cdfdae25b2",
+			"keccak256": "0x936f08b7b8cdd2b358e148aad0817f27ca55479011e3898c4d90cdf36c302820",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://183186651067ce8250dd10a7523f0a3dea08138ccccdc7dea00641f42588eeb0",
-				"dweb:/ipfs/QmNqYat5KU6dwxgpmReSmHgJpfuspV7PsjcAmiD1LS2g8D"
+				"bzz-raw://9038072ffe75e6c1a7e2ffcb7c1cf36a0d45ee688692ac7ffe16f931cf5a1085",
+				"dweb:/ipfs/QmbfeyW6xgaCVDTr78EVPX69NHkKuassbGyM7gmipD2smy"
 			]
 		},
 		"contracts/FlightSuretyData.sol": {
-			"keccak256": "0xb8e4652be8e7204ed1c959874c83791a69745c2996c41730f3a55d2735b6057b",
+			"keccak256": "0x6c46eab1deea0ecc69afd0daacd48627910b759f191b1df39d496bb493bd32dd",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://2f96a01b12530e16db5ecdc3fa2e4712e32df7d57df223b3e830158e823da7d8",
-				"dweb:/ipfs/QmcTwYX7uyvftJh7PANUWNBBgr7Hs17W8JgYdyjS7fDRJB"
+				"bzz-raw://c44f7ae00070cf6a3fb7e45dec226db5e9498120e4f8c53ec50c3a62e946663d",
+				"dweb:/ipfs/QmRVdy5YA5Kidb1Ae86PcNJQchZanHZcTHB14E1AaWiun2"
 			]
 		},
 		"node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {

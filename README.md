@@ -11,6 +11,10 @@ To install, download or clone the repo, then:
 `npm install`
 `truffle compile`
 
+Configure Ganache on the default port of 7545, and deploy locally to Ganache to view structures for debugging:
+
+`truffle migrate --network GanacheGUI`
+
 ## Develop Client
 
 To run truffle tests:
@@ -26,6 +30,11 @@ To use the dapp:
 To view dapp:
 
 `http://localhost:8000`
+
+After starting the dapp and deploying to Ganache, Press the "Load default contract data" button
+in the top left of the webpage to populate the contract with default data like airlines, passengers,
+and flights. Then, press the get flight info button to get a list of available flights.
+You can use this data to input into the forms of the webpage to purchase insurance, etc.
 
 ## Develop Server
 

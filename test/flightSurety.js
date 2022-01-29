@@ -233,13 +233,13 @@ contract('Flight Surety Tests', async (accounts) => {
     let revert1 = false;
     globalTimeStamp = BigNumber(Date.now() + 100000);
     try {
-        await flightSuretyApp.registerFlight(globalFlightName, globalTimeStamp, {from: passenger});
+        await flightSuretyApp.registerFlight(passenger, globalFlightName, globalTimeStamp, {from: passenger});
     } catch (error) {
         revert1 = true;
     }
     let revert2 = false;
     try {
-        globalFightKey = await flightSuretyApp.registerFlight(globalFlightName, globalTimeStamp, {from: airline2});
+        globalFightKey = await flightSuretyApp.registerFlight(airline2, globalFlightName, globalTimeStamp, {from: airline2});
     } catch (error) {
         revert2 = true;
     }

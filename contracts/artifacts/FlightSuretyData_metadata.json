@@ -29,7 +29,13 @@
 					}
 				],
 				"name": "addAuthorizedCaller",
-				"outputs": [],
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
@@ -484,11 +490,11 @@
 	},
 	"sources": {
 		"contracts/FlightSuretyData.sol": {
-			"keccak256": "0x128a6a236169671a5d3a70096db277c893af7fe42122e643c3ac9dd65598137a",
+			"keccak256": "0x6c46eab1deea0ecc69afd0daacd48627910b759f191b1df39d496bb493bd32dd",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://1317eed7ec9402a570e2b54772f0e60f380d183333a4820bbe32b27c7eae2ae3",
-				"dweb:/ipfs/QmazBGwTTJURLC6bgGLU4YuYyftTKN7Vj9mhfJvYFVXs94"
+				"bzz-raw://c44f7ae00070cf6a3fb7e45dec226db5e9498120e4f8c53ec50c3a62e946663d",
+				"dweb:/ipfs/QmRVdy5YA5Kidb1Ae86PcNJQchZanHZcTHB14E1AaWiun2"
 			]
 		},
 		"node_modules/@openzeppelin/contracts/utils/math/SafeMath.sol": {

@@ -49,6 +49,10 @@ contract FlightSuretyApp {
     mapping(address => mapping (address => bool)) voteCasted;
     mapping(address => uint256) voteTotal; 
 
+    address[] allAirlines;
+    string[] allFlightNames;
+    uint256[] allTimeStamps;
+
     /********************************************************************************************/
     /*                                            EVENTS                                        */
     /********************************************************************************************/
@@ -83,7 +87,7 @@ contract FlightSuretyApp {
     /**
     * @dev Modifier that requires the "ContractOwner" account to be the function caller
     */
-    modifier requireContractOwner()
+    modifier requireIsContractOwner()
     {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
@@ -164,7 +168,7 @@ contract FlightSuretyApp {
     function setOperatingStatus(bool newStatus) 
         public 
         requireIsOperational
-        requireContractOwner
+        requireIsContractOwner
     {
         dataContract.setOperatingStatus(newStatus);
     }
@@ -205,10 +209,56 @@ contract FlightSuretyApp {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-   /**
-    * @dev Add an airline to the registration queue
-    *
-    */   
+    function loadDefaultContractDataForUIDemo(
+        address[] memory defaultAirlines,
+        address[] memory defaultPassengers,
+        string[] memory defaultFlightNames,
+        uint256[] memory defaultTimeStamps)
+        public
+        // requireIsOperational
+        // requireIsContractOwner
+    {
+        for (uint8 i = 0; i < allAirlines.length; i++)
+        {
+            allAirlines.pop();
+        }
+        for (uint8 i = 0; i < allFlightNames.length; i++)
+        {
+            allFlightNames.pop();
+        }
+        for (uint8 i = 0; i < allTimeStamps.length; i++)
+        {
+            allTimeStamps.pop();
+        }
+        for (uint8 i = 0; i < defaultAirlines.length; i++)
+        {
+            registerAirlineAsContractOwner(defaultAirlines[i]);
+            registerPassengerAsContractOwner(defaultPassengers[i]);
+            registerFlightAsContractOwner(defaultAirlines[i], defaultFlightNames[i], defaultTimeStamps[i]);
+        }
+    }
+
+    function registerAirlineAsContractOwner(address inputAirlineAddress)
+        internal
+    {
+        dataContract.registerAirline(inputAirlineAddress);
+        emit airlineRegistered(inputAirlineAddress);
+    }
+
+    function registerPassengerAsContractOwner(address inputPassengerAddress)
+        internal
+    {
+        dataContract.registerPassenger(inputPassengerAddress);
+        emit passengerRegistered(inputPassengerAddress);
+    }
+
+    function registerFlightAsContractOwner(address inputAirlineAddress, string memory flightName, uint256 timestamp)
+        internal
+    {
+        bytes32 flightKey = dataContract.registerFlight(inputAirlineAddress, flightName, timestamp);
+        emit flightRegistered(inputAirlineAddress, flightName, timestamp);
+    }
+
     function registerAirline(address inputAirlineAddress)
         public
         requireIsOperational
@@ -219,7 +269,7 @@ contract FlightSuretyApp {
 
         if (airlinesCount < NUM_CONSENSUS_MIN)
         {
-            require(isAddressFundedAirline(msg.sender), "Must be an airline to submit another airline when total airlines are below the minimum for consensus");
+            require(isAddressFundedAirline(msg.sender), "Must be a funded airline to submit another airline when total airlines are below the minimum for consensus");
             dataContract.registerAirline(inputAirlineAddress);
             emit airlineRegistered(inputAirlineAddress);
         }
@@ -251,7 +301,7 @@ contract FlightSuretyApp {
     function registerInitialAirline(address inputAirlineAddress)
         public
         requireIsOperational
-        requireContractOwner
+        requireIsContractOwner
     {
         dataContract.registerFirstAirline(inputAirlineAddress);
         emit airlineRegistered(inputAirlineAddress);
@@ -293,36 +343,32 @@ contract FlightSuretyApp {
         emit passengerRegistered(inputPassengerAddress);
     }
 
-    function registerPassengerContractOwner(address inputPassengerAddress)
+    function registerFlight(address airline, string memory flightName, uint256 timestamp)
         public
         requireIsOperational
-        // requireContractOwner
-    {
-        require(dataContract.isAddressPassenger(inputPassengerAddress) == false, "address is already a passenger!");
-        dataContract.registerPassenger(inputPassengerAddress);
-        //emit passengerRegistered(inputPassengerAddress);
-    }
-
-    function registerFlight(string memory flightName, uint256 timestamp)
-        public
-        requireIsOperational
-        requireIsAirline(msg.sender)
+        requireIsAirline(airline)
         returns(bytes32)
     {
-        bytes32 flightKey = dataContract.registerFlight(msg.sender, flightName, timestamp);
-        emit flightRegistered(msg.sender, flightName, timestamp);
+        bytes32 flightKey = dataContract.registerFlight(airline, flightName, timestamp);
+        emit flightRegistered(airline, flightName, timestamp);
         return flightKey;
     }
 
     function getAllFlights()
         public
-        view
         requireIsOperational
-        returns (address, string memory, uint256 )
+        returns (address[] memory, string[] memory, uint256[] memory )
     {
         bytes32[] memory keys = dataContract.getFlightKeysForUI();
-        (address airline, string memory flightName, uint256 timeStamp) = getFlightInfo(keys[0]);
-        return (airline, flightName, timeStamp);
+        
+        for (uint8 i = 0; i < keys.length; i++)
+        {
+            (address airline, string memory flightName, uint256 timeStamp) = getFlightInfo(keys[i]);
+            allAirlines.push(airline);
+            allFlightNames.push(flightName);
+            allTimeStamps.push(timeStamp);
+        }
+        return (allAirlines, allFlightNames, allTimeStamps);
     }
 
     function getFlightInfo(bytes32 flightKey)
